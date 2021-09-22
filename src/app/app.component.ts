@@ -1,40 +1,43 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { NgForm } from '@angular/forms';
+import { Observable, Subscription } from 'rxjs';
 import { IFlash } from './models/flash.model';
+import { FlashService } from './services/flash.service';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AppComponent {
+export class AppComponent implements OnInit, OnDestroy {
   title = 'ng-flashcards';
-  @ViewChild('flashForm', {static: true}) flashForm!: NgForm
-  flashs: IFlash[] = [{
-    question: 'Question 1',
-    answer: 'Answer 1',
-    show: false,
-    id: this.getRandomNumber(),
-    }, {
-    question: 'Question 2',
-    answer: 'Answer 2',
-    show: false,
-    id: this.getRandomNumber(),
-    remembered: 'correct'
-    }, {
-    question: 'Question 3',
-    answer: 'Answer 3',
-    show: false,
-    id: this.getRandomNumber(),
-    remembered: 'incorrect'
-
-    }];
-    flash: IFlash = {
+  @ViewChild('flashForm', {static: true}) flashForm!: NgForm;
+  //@ts-ignore
+  //@ts-ignore
+  flash$: Observable<IFlash[]>;
+  //@ts-ignore
+  flash: IFlash = {
       question: '',
       answer: '',
-    };
+  };
     editing = false;
     editingId!: number;
+
+constructor(
+  private flashService: FlashService
+) {
+
+}
+ngOnInit() {
+  this.flash$ = this.flashService.flashs$;
+
+}
+ngOnDestroy() {
+
+}
+
+
     trackByFlashId(index: any, flash: any) {
       return flash.id;
     }
@@ -43,40 +46,25 @@ export class AppComponent {
     return Math.floor(Math.random() * 10000);
    }
    handleToggleCard(id: number){
-     const flash = this.flashs.find(flash => flash.id == id);
-     // @ts-ignore
-     flash?.show = !flash?.show
+     this.flashService.toggleFlash(id);
    }
    handleDelete(id: number) {
-     // @ts-ignore
-    const flashId = this.flashs.indexOf(flash => flash.id ===
-    id);
-    this.flashs.splice(flashId, 1)
+      this.flashService.deleteFlash(id);
     }
     handleEdit(id: number) {
-    this.editing = true;
-    this.editingId = id;
-    //@ts-ignore
-    const flash = this.flashs.find(flash => flash.id === id);
-    //@ts-ignore
-    this.flash.question = flash.question;
-    //@ts-ignore
-    this.flash.answer = flash.answer;
+      //@ts-ignore
+      this.flash = this.flashService.getFlash(id);
+      this.editing = true;
+      this.editingId = id;
     }
      // @ts-ignore
     handleRememeberedChange({id, flag}) {
-    const flash = this.flashs.find(flash => flash.id === id);
-     // @ts-ignore
-    flash.remembered = flag;
+      this.flashService.rememberedChange(id, flag);
     }
 
-    handleSubmit()
- {
-  this.flashs.push({
-    id: this.getRandomNumber(),
-    ...this.flash
-  });
-  this.handleClear();
+    handleSubmit() {
+    this.flashService.addFlash(this.flash);
+    this.handleClear();
  }
     handleClear() {
       this.flash = {
@@ -86,12 +74,7 @@ export class AppComponent {
       this.flashForm.reset();
     }
     handleUpdate() {
-      const flash = this.flashs.find(flash => flash.id ===
-        this.editingId);
-        //@ts-ignore
-        flash.question = this.flash.question;
-        //@ts-ignore
-        flash.answer = this.flash.answer;
+     this.flashService.updateFlash(this.editingId, this.flash);
         this.handleCancel();
        
     }

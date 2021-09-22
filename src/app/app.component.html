@@ -23,5 +23,5 @@
     </ng-template>
 </form>
 <div class="flashs">
-    <app-flash *ngFor=" let flash of flashs; trackBy:trackByFlashId" [flash]="flash" (onToggleCard)="handleToggleCard($event)" (onDelete)="handleDelete($event)" (onEdit)="handleEdit($event)" (onRememberedChange)="handleRememeberedChange($event)"></app-flash>
+    <app-flash *ngFor=" let flash of flash$ | async; trackBy:trackByFlashId" [flash]="flash" (onToggleCard)="handleToggleCard($event)" (onDelete)="handleDelete($event)" (onEdit)="handleEdit($event)" (onRememberedChange)="handleRememeberedChange($event)"></app-flash>
 </div>
